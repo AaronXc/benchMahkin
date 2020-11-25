@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+import subprocess
+import re
+import os
+import sys
+import matplotlib.pyplot as plt
+import  numpy as np
+#import time
+numberOfFields=3
+numberOfFields+=1
+########################################################################################
+#
+#       what this script does:
+#
+#   cat the ls of autosaved files into text file and open it for editing   
+#   keep the files that you want to compare
+#   regex the files names (txt)
+#   read the files that were found, take the first line as the test name and the result as a string and display the results in order of speed
+# this program does not (yet) do the following:
+#   tally the "wins" for each hardware component
+#   group drives into lower resolution comparisons
+#   tally the "wins" for each hardware component
+#   plot both results on the same axes
+
+def selectFiles():
+    #files=subprocess.Popen(["ls", ".\\AutoSavedResults"], stdout=subprocess.PIPE, universal_newlines=True)
+    files=os.listdir("AutoSavedResults")
+    comparsionName=input("please enter a descriptive name for the comparison. This will be the name of the directory containing the results of the comparison ")
+    
+    if os.path.exists("./comparisons/"+comparsionName) == False:
+        os.mkdir("./comparisons/"+comparsionName)
+    else:
+        while os.path.exists(./comparisons/"+comparsionName) != False:
+            warning="A directory named "+path+" already exists. Please enter a different name"
+            path = input(warning)
+    f=open("./comparisons/"+comparsionName+"/"comparsionName, "w")
+    for line in files:
+        f.write(line+"\n")
+    f.close()
+    subprocess.run(["notepad", "./comparisons/"+comparsionName], universal_newlines=True)
+    f=open("./comparisons/"+comparsionName, "r+")
+    compareTheseTests=f.readlines()
+    f.close()
+    
+##############################################################################################
+    # get  a list that contains strings of all the data, "dumping" in the data one file at a time
+    rawData = []
+    for testName in compareTheseTests:
+        testName=testName.strip()
+        f=open("./AutoSavedResults/"+testName+"/average values.txt", "r+")
+        testingAverages=f.readlines()
+        for average in testingAverages:
+            average=str(average)
+            begin=0
+            rawDataMember=[]
+            for i in range(len(average)):
+                if average[i] == "," or average[i] == "\n":
+                    rawDataMember.append(average[begin:i])
+                    begin=i+1
+            rawDataMember.append(testName)
+            rawData.append(rawDataMember)
+#############################################################################################                        
+#   sift through the data and put in the order of the number of drives used in that test, assuming that the tests start with 1 drive used
+    tests=[]
+    for data in rawData:
+        if data[0] not in tests:
+            tests.append(data[0]) 
+    graphStuff(compareTheseTests, tests)
+    f=open("./comparisons"+comparsionName+"/"+comparsionName, "w+")
+    for test in tests:
+        IOPS=[]
+        BW=[]
+        for data in rawData:
+            if data[0] == test:
+                IOPS.append((data[2], data[3]))
+                BW.append((data[1], data[3]))
+        IOPS=compareData(IOPS)
+        BW=compareData(BW)
+        f.write(" testing "+test+" drive(s): \n")
+        f.write("   IOPS \n")
+        for IOP in IOPS:
+            for stuff in IOP:
+                f.write("   "+stuff+" ")
+            f.write("\n")
+        f.write("   BW: \n")
+        for stuff in BW:
+            for moreStuff in stuff:
+                f.write("   "+moreStuff+" ")
+            f.write("\n")
+    f.close
+        
+        
+
+#############################################################################################
+# compare the data for each test that was run  
+def compareData(datas):
+    sortedData=['blank' for element in datas]
+    for data in datas:
+        i=0
+        for j in range(datas.index(data)+1, len(datas)):
+            if float(data[0]) - float(datas[j][0]) < 0:
+                i+=1
+        for k in range(0, datas.index(data)):
+            if float(data[0]) - float(datas[k][0]) < 0:
+                i+=1      
+        if sortedData[i]=='blank':
+            sortedData[i]=(data)
+        else:
+            sortedData.insert(i, data)
+    while len(sortedData) != 0 and 'blank' in sortedData:
+        sortedData.remove('blank')
+    return sortedData
+            
+        
+
+def graphStuff(compareTheseTests, tests):
+    BW_y_axes=[tests]
+    IOPS_y_axes=[tests]
+    fig, (ax1, ax2) = plt.subplots(2)
+    fig.suptitle("Stornado Performance")
+    ax1.set(ylabel="IOPS (operations/s)")
+    ax2.set(ylabel="throughput (MiB/s)")
+    for testName in compareTheseTests:
+        testName=testName.strip()
+        f=open("./AutoSavedResults/"+testName+"/average values.txt", "r+")
+        testingAverages=f.readlines()
+        BW_y_axis=[]
+        IOPS_y_axis=[]
+        for average in testingAverages:
+            average=str(average)
+            begin=0
+            for i in range(len(average)):
+                if average[i] == "," and begin != 0:
+                    IOPS_y_axis.append(float(average[begin:i]))
+                    begin=i+1
+                elif average[i] == "\n":
+                    BW_y_axis.append(float(average[begin:i]))
+                    begin=i+1
+                elif average[i] == "," and begin == 0:
+                #    if average[begin:i] not in x_axis:
+                #       x_axis.append(average[begin:i])
+                    begin=i+1
+        #BW_y_axes.append(BW_y_axis)
+        #IOPS_y_axes.append(IOPS_y_axis)    
+        skip=2
+        locations=(np.arange(1,len(tests), skip))
+        labels=[]
+        for loc in locations:
+            labels.append(str(loc))   
+        
+        ax1.set_autoscaley_on(True)
+        ax2.set_autoscaley_on(True)
+        
+        ax1.plot(IOPS_y_axes[0], IOPS_y_axis, label=testName)
+        ax2.plot(BW_y_axes[0], BW_y_axis, label=testName)
+        
+        ax1.set_xticks(ticks=locations)
+        ax2.set_xticks(ticks=locations)
+        ax1.grid(True)
+        ax2.grid(True)
+    plt.xlabel("number of drives used in I/O operations")
+    plt.legend()
+    plt.savefig("./comparisons/"+comparsionName+"graphs.png")
+        
+def main():
+    if os.path.exists("./comparisons") == False:
+        os.mkdir("./comparisons")
+    selectFiles()
+
+if __name__ =="__main__":
+    main()
+    
+
+                            
+                        
+                        
+                        
+            
+

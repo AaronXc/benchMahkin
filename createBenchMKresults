@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+#bs 256k fs 1g rw read j 1 n 1 m 3
+import subprocess
+import re
+import os
+import sys
+from optparse import OptionParser
+import time
+
+def checkUnits(regex):
+    IOPS=regex.group(1)
+    BW=regex.group(3)
+    if regex.group(2) != None:
+        print(regex.group(2))
+        if regex.group(2) == "k":   
+            IOPS=float(IOPS)
+            IOPS*=1000
+            str(IOPS)
+    if regex.group(4) != None:
+        print(regex.group(4))
+        if regex.group(4) == "MiB/s":
+            pass
+        elif regex.group(4) == "KiB/s":
+            BW=float(BW)
+            BW=float(BW)
+            BW/=1000
+            str(BW)
+        elif regex.group(4) == "GiB/s":
+            BW=float(BW)
+            BW*=1000
+            str(BW)
+    return IOPS, BW
+    
+f2=open("BenchMKresults", "w+")
+############## overwrite previous test results
+f2.write("DefaultName\n")
+f2.close()      
+############## 
+for i in range(1,30):
+    print("I'm workin' on file ", i)
+    fname=str(int(i))
+    if os.path.exists("./"+fname):
+        f=open(str(int(i)), 'r+')
+        performanceData=f.readlines()
+        f.close()
+        f2=open("BenchMKresults", "a+")
+        for line in performanceData:
+            read_performance = re.search("read:\s+IOPS=(\d+\.*\d+)(.*),\s+BW=(\d+\.*\d+)(\S+)\s+.*$", line)
+            if read_performance != None:
+                #deal with units
+                IOPS, BW = checkUnits(read_performance)    
+                f2.write("{n},{io},{bw}\n".format(n=i, io=IOPS, bw=BW))
+            write_performance = re.search("write:\s+IOPS=(\d+\.*\d+)(.*),\s+BW=(\d+\.*\d+)(\S+)\s+.*$", line)
+            if write_performance != None:
+                #deal with units
+                IOPS, BW = checkUnits(read_performance) 
+                f2.write("{n},{io},{bw}\n".format(n=i, io=IOPS, bw=BW))
+        f2.close()
+        
+
+    

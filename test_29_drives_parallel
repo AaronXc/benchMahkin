@@ -1,0 +1,30 @@
+#!/usr/bin/bash
+fio --name=name --output=1 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdaa &&
+fio --name=name --output=2 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdf &&
+fio --name=name --output=3 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdd &&
+fio --name=name --output=4 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdj &&
+fio --name=name --output=5 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sds &&
+fio --name=name --output=6 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdh &&
+fio --name=name --output=7 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdg &&
+fio --name=name --output=8 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdm &&
+fio --name=name --output=9 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdn &&
+fio --name=name --output=10 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdl &&
+fio --name=name --output=11 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdk &&
+fio --name=name --output=12 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdq &&
+fio --name=name --output=13 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdr &&
+fio --name=name --output=14 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdp &&
+fio --name=name --output=15 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdo &&
+fio --name=name --output=16 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdu &&
+fio --name=name --output=17 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdv &&
+fio --name=name --output=18 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdt &&
+fio --name=name --output=19 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sds &&
+fio --name=name --output=20 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdx &&
+fio --name=name --output=21 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdab &&
+fio --name=name --output=22 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdz &&
+fio --name=name --output=23 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdy &&
+fio --name=name --output=24 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdae &&
+fio --name=name --output=25 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdaf &&
+fio --name=name --output=26 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdad &&
+fio --name=name --output=27 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdac &&
+fio --name=name --output=28 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdc &&
+fio --name=name --output=29 --filesize=$1 --bs=1M --readwrite=read --ioengine=libaio --numjobs=1 --filename=/dev/sdi
