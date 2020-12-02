@@ -316,35 +316,7 @@ globalSection3 = "[global]\n \
             
 globalSections= [globalSection, globalSection2, globalSection3]
 
-coresPerDrive=1
-
-def checkUnits(regex):
-    IOPS=regex.group(1)
-    BW=regex.group(3)
-    if regex.group(2) != None:
-        print(regex.group(2))
-        if regex.group(2) == "k":   
-            IOPS=float(IOPS)
-            IOPS*=1000
-            str(IOPS)
-        elif regex.group(2) == "M":
-            IOPS=float(IOPS)
-            IOPS*=1000000
-            str(IOPS)
-    if regex.group(4) != None:
-        print(regex.group(4))
-        if regex.group(4) == "MiB/s":
-            pass
-        elif regex.group(4) == "KiB/s":
-            BW=float(BW)
-            BW=float(BW)
-            BW/=1000
-            str(BW)
-        elif regex.group(4) == "GiB/s":
-            BW=float(BW)
-            BW*=1000
-            str(BW)
-    return IOPS, BW
+drivesPerJob=7
     
 #   create the directory for each test
 #   make the job files for each test in that directory
@@ -352,59 +324,53 @@ def checkUnits(regex):
 #   run all the job files in a bash script
 #   using the bash script, run a test to make the tab separated file for EXCEL plotting
    
-def main():     
+def main(): 
+
+    fioCommands = "./allCommands"
+    f=open(fioCommands, "w+")
+    f.write("#!/usr/bin/bash\n")
+    f.close()
+    
     for section in globalSections:
         for driveOrder in driveOrders:
         
-            directoryNameIndex = (globalSections.index(section)+1)*(driveOrders.index(driveOrder)+1)-1
-            if not os.path.exists("./"+directoryNames[directoryNameIndex]):
+            directoryNameIndex = ((driveOrders.index(driveOrder)+1)+len(driveOrders)*globalSections.index(section))-1
+            if not os.path.exists("./"+directoryNames[directoryNameIndex]):                                 # make the directory for the test
                 os.mkdir("./"+directoryNames[directoryNameIndex])
-           
-
-           if not os.path.exists("./"+directoryNames[directoryNameIndex]):
-                os.mkdir("./"+directoryNames[directoryNameIndex])
-                
-            f=open("./"+directoryNames[directoryNameIndex]+"/FioTest", "w+")
-            #change the above line to start a new fio test 12 times in this double-loop thingy we're in right now
-            f.write(section)	
-            f.close()
             
-            f=open("./"+directoryNames[directoryNameIndex]+"/FioTest", "a+")
-            for i in range(1,len(driveOrder)):
-                stringI=str(i)
-                outputFile="./"+directoryNames[directoryNameIndex]+"/"+stringI
-                f.write("[job"+stringI+"]\n")
-                for j in range(1,(coresPerDrive+1)):
-                    f.write("filename="+driveOrder[i-1]+"\n")
-                    
-            f.close()
-            #subprocess.run(["fio", "./"+directoryNames[directoryNameIndex]+"/FioTest", "--output="+outputFile], universal_newlines=True)   
-#########################################################################################################################################################################
-# make this section a second python script
-            f2=open("./"+directoryNames[directoryNameIndex]+"/BenchMKresults", "w+")
-            ############## overwrite previous test results
-            f2.write("DefaultName\n")
-            f2.close()      
-            ############## 
-            for i in range(1,33):
-                fname=str(int(i))
-                if os.path.exists("./"+directoryNames[directoryNameIndex]+"/"+fname):
-                    f=open("./"+directoryNames[directoryNameIndex]+"/"+fname, 'r+')
-                    performanceData=f.readlines()
+            jobs=int(len(driveOrder)/drivesPerJob)
+            for i in range(1,len(driveOrder)+1):
+                jobFile = "./"+directoryNames[directoryNameIndex]+"/FioTest"+str(i)
+                f=open(jobFile, "w+")
+                f.write(section)	
+                f.close()
+                
+                for k in range(0, int(i/drivesPerJob)):
+                #fill all the jobs
+                    f=open(jobFile, "a+")
+                    f.write("[job"+str(k+1)+"]\n")
                     f.close()
-                    f2=open("./"+directoryNames[directoryNameIndex]+"/BenchMKresults", "a+")
-                    for line in performanceData:
-                        read_performance = re.search("read:\s+IOPS=(\d+\.*\d+)(.*),\s+BW=(\d+\.*\d+)(\S+)\s+.*$", line)
-                        if read_performance != None:
-                            #deal with units
-                            IOPS, BW = checkUnits(read_performance)    
-                            f2.write("{n}   {io}    {bw}\n".format(n=i, io=IOPS, bw=BW))
-                        write_performance = re.search("write:\s+IOPS=(\d+\.*\d+)(.*),\s+BW=(\d+\.*\d+)(\S+)\s+.*$", line)
-                        if write_performance != None:
-                            #deal with units
-                            IOPS, BW = checkUnits(read_performance) 
-                            f2.write("{n}   {io}    {bw}\n".format(n=i, io=IOPS, bw=BW))
-                    f2.close()    
-###########################################################################################################################################################################   
+                    for l in range(0, drivesPerJob): 
+                        f=open(jobFile, "a+")
+                        f.write("filename="+driveOrder[l+(k)*drivesPerJob]+"\n")
+                        f.close() 
+                if i%drivesPerJob == 0:
+                    pass
+                else:
+                    f=open(jobFile, "a+")
+                    f.write("[job"+str(int(i/drivesPerJob)+1)+"]\n")
+                    f.close()
+                    f=open(jobFile, "a+")
+                    for j in range(1, int(i%drivesPerJob+1)): 
+                        f.write("filename="+driveOrder[int(i/drivesPerJob)*drivesPerJob+j-1]+"\n")
+                    f.close() 
+                    
+                outputFile="./"+directoryNames[directoryNameIndex]+"/"+str(i)
+                f=open(fioCommands, "a+")
+                f.write("fio "+jobFile+" --output="+outputFile+"\n")
+                f.close()
+            #create the command to run fioTest_N and put the results in N
+            #subprocess.run(["fio", "./"+directoryNames[directoryNameIndex]+"/FioTest", "--output="+outputFile], universal_newlines=True)   
+
 if __name__ == "__main__":
         main()

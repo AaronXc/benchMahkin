@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+
+rm -rf read_altPorts
+rm -rf read_altCards
+rm -rf read_altPortsAndCards
+rm -rf read_noAlt
+
+rm -rf randrw_altPorts
+rm -rf randrw_altCards
+rm -rf randrw_altPortsAndCards
+rm -rf randrw_noAlt
+
+rm -rf randwrite_altPorts
+rm -rf randwrite_altCards
+rm -rf randwrite_altPortsAndCards
+rm -rf randwrite_noAlt
+
+rm -f allCommands
