@@ -1,0 +1,222 @@
+dec 2 
+
+figure out how many threads should be used for fio tests using boards that have less overall threads available/ is it even a problem
+
+	the thing is the iodepth matters too, the number of io operations to have queued in the i/o controller (HBA card in this case? or some other peripheral on the mobo?).
+	"The direct parameter blocks everything to the extent that the iodepth lets it". Instead of waiting for the I/O (or the RAM cache if direct=0) to get back to the CPU 
+	with the iodepth = 1 which defeats the purpose of asynchronous I/O, you can wait for the only requests that are sitting in the i/o controller queue, using it as a buffer. 
+	It's kinda like pipelining.
+	
+	applications: not having enough threads on seperate cores to optimize the use of all the drives. Using the above knowledge, the cpu cores don't have to be tasked so heavily,
+				the i/o controller queue can act as a buffer for asynchronous i/o. The results speak for themselves. Moreover, when using 1 core per 7 drives for a 32 drive system
+				and 16 total threads (8 cores), the i/o tops out at 7829 MB/s. At a glance, this is not bottlenecking on the HBA card, (results shown below demonstrate faster speeds
+				with the same HBA card in use) and looking at the math in more depth:
+				
+					7829 MB/s / 5 jobs = 1565 per job
+					not sure what was going on there
+	
+				this can be used depending on the CPU: if there are 32 threads available, its fine, otherwise you might want to change the iodepth. 
+				Should I keep the number of files per job "optimal" or just do one job for every test?
+						Doing more one-off tests shows that using only one job section in the job file results in sub-optimal performance
+						using 2 jobs allows for 12.5 GB/s
+						
+	things to try:
+		
+	running 1 job:
+		direct = 1, alter iodepth and number of filenames result: throughput increases proportional to iodepth: 
+			with 6 filenames per job { 
+								iodepth=1, thrpt=467 MB/s 
+								iodepth=2, thrpt= 939 MB/s, 
+								iodepth=6, thrpt= 2739 MB/s
+								iodepth=20, thrpt= 2729 MB/s
+			}
+			with 29 filenames per job {
+								iodepth=1, thrpt=467 MB/s 
+								iodepth=2, thrpt= 972 MB/s, 
+								iodepth=6, thrpt=  3004 MB/s,
+								iodepth=32, thrpt= 11.3 GB/s
+			}
+			with 1 filename per job{
+								iodepth=1, thrpt=467 MB/s 
+								iodepth=2, thrpt= 972 MB/s, 
+								iodepth=6, thrpt=  3004 MB/s,
+								iodepth=32, thrpt= 11.3 GB/s
+			}
+		direct = 0, alter iodepth and # files:
+			with 6 filenames per job{
+								iodepth=1, thrpt= 2719 MB/s, iodpeth reported as 1
+								iodepth=2, thrpt= 2718 MB/s, iodpeth reported as 2
+								iodepth=6, thrpt= 2720 MB/s iodpeth reported as 4
+								iodepth=32, thrpt= 2720 MB/s iodpeth reported as 32
+								
+			}
+			with 29 filenames per job{
+								iodepth=1, thrpt= 3502 MB/s 
+								iodepth=2, thrpt= 3505 MB/s, 
+								iodepth=6, thrpt= 3490 MB/s and the iodepth reported was 4 100% of the time, suggesting hitting the cache?
+								iodepth=32, thrpt= 3159 MB/s			
+			}
+	running 2 jobs:
+								with 6 filenames per job { 
+								iodepth=1, thrpt=941 MB/s 
+								iodepth=2, thrpt= 1893 MB/s, 
+								iodepth=6, thrpt= 5489 MB/s
+								iodepth=32, thrpt= 5452 MB/s
+								}
+								
+								with 16 filenames per job { 
+								iodepth=1, thrpt=950 MB/s  
+								iodepth=6, thrpt= approx 6000 MB/s 3 times (all 3 times) 
+								iodepth=8,
+								iodepth=16, thrpt= 11.2 GB/s, not repeatable though 2 other times arounf 7000 MB/s
+								iodepth=32, thrpt= 12.5 MB/s, repeatable, 3 other times at 12.5 GB/s (all 4 tests that were run)
+								}
+
+---------------------begin garbage from splicing together tests---------------------------------------------------------------------------------------------------------
+
+
+[global]
+name=name
+filesize=4g
+bs=1M
+ioengine=libaio
+iodepth=16
+readwrite=read
+numjobs=1
+direct=1
+group_reporting
+
+
+[job1]
+filename=/dev/1-1:/dev/1-2:/dev/1-3:/dev/1-4:/dev/1-5:/dev/1-6:/dev/1-7:/dev/1-8:/dev/1-9:/dev/1-10:/dev/1-11:/dev/1-12:/dev/1-13:/dev/1-14:/dev/1-15:/dev/1-16
+
+
+[job2]
+filename=/dev/2-1:/dev/2-2:/dev/2-3:/dev/2-4:/dev/2-5:/dev/2-6:/dev/2-7:/dev/2-8:/dev/2-9:/dev/2-10:/dev/2-11:/dev/2-12:/dev/2-13:/dev/2-14:/dev/2-15:/dev/2-16
+
+
+[global]
+name=name
+filesize=4g
+bs=1M
+ioengine=libaio
+iodepth=6
+readwrite=read
+numjobs=1
+direct=1
+group_reporting
+
+
+[job1]
+filename=/dev/1-1/dev/1-2:/dev/1-3:/dev/1-4:/dev/1-5:/dev/1-6:/dev/1-7:/dev/1-8:/dev/1-9:/dev/1-10:/dev/1-11:/dev/1-12:/dev/1-13:/dev/1-14:/dev/1-15:/dev/1-16
+
+
+[job2]
+filename=/dev/2-1:/dev/2-2:/dev/2-3:/dev/2-4:/dev/2-5:/dev/2-6:/dev/2-7:/dev/2-8:/dev/2-9:/dev/2-10:/dev/2-11:/dev/2-12:/dev/2-13:/dev/2-14:/dev/2-15:/dev/2-16
+
+
+
+
+
+:/dev/1-7:/dev/1-8:/dev/1-9:/dev/1-10:/dev/1-11:/dev/1-12:/dev/1-13:/dev/1-14:/dev/1-15:/dev/1-16
+:/dev/2-7:/dev/2-8:/dev/2-9:/dev/2-10:/dev/2-11:/dev/2-12:/dev/2-13:/dev/2-14:/dev/2-15:/dev/2-16
+use the knowledge to decide whether or not the test that has been run should be run again, talk to Brett about it
+
+[job1]
+filename=/dev/1-1:/dev/1-2:/dev/1-3:/dev/1-4:/dev/1-5:/dev/1-6:/dev/1-7:/dev/1-8:/dev/1-9:/dev/1-10:/dev/1-11:/dev/1-12:/dev/1-13:/dev/1-14:/dev/1-15:/dev/1-16:/dev/2-1:/dev/2-2:/dev/2-3:/dev/2-4:/dev/2-5:/dev/2-6:/dev/2-7:/dev/2-8:/dev/2-9:/dev/2-10:/dev/2-11:/dev/2-12:/dev/2-13:/dev/2-14:/dev/2-15:/dev/2-16
+
+[job1]
+filename=/dev/1-1
+
+[job2]
+filename=/dev/1-2
+
+[job3]
+filename=/dev/1-3
+
+[job4]
+filename=/dev/1-4
+
+[job5]
+filename=/dev/1-5
+
+[job6]
+filename=/dev/1-6
+
+[job7]
+filename=/dev/1-7
+
+[job8]
+filename=/dev/1-8
+
+[job9]
+filename=/dev/1-9
+
+[job10]
+filename=/dev/1-10
+
+[job11]
+filename=/dev/1-11
+
+[job12]
+filename=/dev/1-12
+
+[job13]
+filename=/dev/1-13
+
+[job14]
+filename=/dev/1-14
+
+[job15]
+filename=/dev/1-15
+
+[job16]
+filename=/dev/1-16
+
+[job17]
+filename=/dev/2-1
+
+[job18]             
+filename=/dev/2-2
+              
+[job19]      
+filename=/dev/2-3
+      
+[job20]  
+filename=/dev/2-4
+
+[job21]              
+filename=/dev/2-5
+
+[job22]
+filename=/dev/2-6
+
+[job23]
+filename=/dev/2-7
+
+[job24]
+filename=/dev/2-8
+
+[job25]                     
+filename=/dev/2-9
+
+[job26]                     
+filename=/dev/2-10
+
+[job27]                     
+filename=/dev/2-11
+              
+[job28]       
+filename=/dev/2-12
+
+[job29]                
+filename=/dev/2-13
+
+[job30]                  
+filename=/dev/2-14
+
+[job31]                     
+filename=/dev/2-15
+
+[job32]                    
+filename=/dev/2-16
