@@ -36,6 +36,8 @@ figure out how many threads should be used for fio tests using boards that have 
 								iodepth=6, thrpt=  3004 MB/s,
 								iodepth=32, thrpt= 11.3 GB/s
 			}
+	running 29 jobs:
+		direct = 1, alter iodepth and number of filenames result: throughput increases proportional to iodepth: 
 			with 1 filename per job{
 								iodepth=1, thrpt=467 MB/s 
 								iodepth=2, thrpt= 972 MB/s, 
@@ -57,18 +59,19 @@ figure out how many threads should be used for fio tests using boards that have 
 								iodepth=32, thrpt= 3159 MB/s			
 			}
 	running 2 jobs:
-								with 6 filenames per job { 
+			with 6 filenames per job { 
 								iodepth=1, thrpt=941 MB/s 
 								iodepth=2, thrpt= 1893 MB/s, 
 								iodepth=6, thrpt= 5489 MB/s
 								iodepth=32, thrpt= 5452 MB/s
 								}
 								
-								with 16 filenames per job { 
+			with 16 filenames per job { 
 								iodepth=1, thrpt=950 MB/s  
 								iodepth=6, thrpt= approx 6000 MB/s 3 times (all 3 times) 
 								iodepth=8,
-								iodepth=16, thrpt= 11.2 GB/s, not repeatable though 2 other times arounf 7000 MB/s
+								iodepth=16, thrpt= 11.2 GB/s, not repeatable though 2 other times around just over 7000 MB/s -> the next day, hit 11.2 GB/s 6 of the 7
+															  tests, 9.86 GB/s on the other.
 								iodepth=32, thrpt= 12.5 MB/s, repeatable, 3 other times at 12.5 GB/s (all 4 tests that were run)
 								}
 
