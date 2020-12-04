@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+#get the bench mark results from fio's individual output files and put them in a new directory called BenchMKresults. In subdirectories, sort the results into files
+
 import subprocess
 import re
 import os
@@ -11,7 +13,6 @@ def checkUnits(regex):
     IOPS=regex.group(1)
     BW=regex.group(3)
     if regex.group(2) != None:
-        print(regex.group(2))
         if regex.group(2) == "k":   
             IOPS=float(IOPS)
             IOPS*=1000
@@ -21,7 +22,6 @@ def checkUnits(regex):
             IOPS*=1000000
             str(IOPS)
     if regex.group(4) != None:
-        print(regex.group(4))
         if regex.group(4) == "MiB/s":
             pass
         elif regex.group(4) == "KiB/s":
@@ -101,7 +101,7 @@ def main():
     f.close()
 
     f=open("/root/benchmarking/BenchMKresults/hardware", "w+")
-    
+#Get information on the hardware that is on the system: the CPU, the motherboard, the SAS controller that the HBA cards use, the PCIe slot that was used the RAM and the bus address.  
     hardware=subprocess.Popen(["dmidecode", "-t", "2"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     mobo_string=None
     if hardware != None:
@@ -111,7 +111,9 @@ def main():
                 mobo_string=mobo.group(1).replace(" ", "_")
                 mobo_string=mobo_string+"_"
                 f.write(mobo_string+"_")
-                
+    else:
+        f.write("hardware_error")
+        sys.exit()            
     hardware=subprocess.Popen(["dmidecode", "-t", "4"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     cpu_string=None
     if hardware != None:
@@ -122,33 +124,23 @@ def main():
                 cpu_string = re.sub("_@_.*", "", cpu )
                 cpu_string+="_"
                 f.write(cpu_string)
-        
-    hardware=subprocess.Popen(["lspci"], stdout=subprocess.PIPE, universal_newlines=True).stdout
-    hbas = [ "SAS3224", "SAS3316", "SAS3616", "SAS3008"]
-    hba_string="_"
-    if hardware != None:
-        for line in hardware:
-            for card in hbas:
-                regex = re.search("^.*LSI\s+({c}).*$".format(c = card), line)
-                if regex != None:
-                    hba_string = regex.group(1)
-    if hba_string == "_":
-        hba_string="unidentifiedHBA"
-    hba_string+="_"
-    f.write(hba_string)
-    
+    else:
+        f.write("hardware_error")
+        sys.exit()     
 
     hardware=subprocess.Popen(["dmidecode", "-t", "9"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    PCIeSlotData=[]
     allSlots_string=""
     if hardware != None:
         in_use = "_"
         slotInfo = {}
         slots=[]
         slotUsages=[]
+        busAddresses=[]
         for line in hardware:
             slotLackingUsage  = re.search("^\tCurrent Usage: (Available)$", line)
             slotUsage  = re.search("^\tCurrent Usage: (In Use)$", line)
-            
+            busAddress = re.search("^\s+Bus Address:\s+[0-9a-fA-F]+:([0-9a-fA-F]+):[\da-fA-F]+\.[0-9a-fA-F]+$", line)
             slot = re.search("^\tDesignation:\s+(.*)$", line)
             if slot != None:
                 slots.append(slot.group(1))
@@ -156,19 +148,52 @@ def main():
                 slotUsages.append(slotUsage.group(1).strip())
             if slotLackingUsage != None:
                 slotUsages.append(slotLackingUsage.group(1).strip())
-                
+            if busAddress != None:
+                busAddresses.append(busAddress.group(1))
         for slot in slots:
             index = slots.index(slot)
-            if index+1 < len(slotUsages) and slotUsages[index] != None:
-                slotInfo[slot]=slotUsages[index]      
-        possibleSlots = slotInfo.keys()
-        for ps in possibleSlots:
-            if slotInfo[ps] == "In Use":
-                ps=ps.strip().replace(" ", "_")
-                ps=ps.replace("_PCI-E_3.0_", "_")
-                ps+="_"
-                allSlots_string+=ps
-                f.write(ps)
+            if index < len(slotUsages) and slotUsages[index] != None and busAddresses[index] != None and index < len(busAddresses):
+                PCIeSlotDataDict={"busAddress": None, "slotUsage": None, "slot": None, "aliasStart": None, "HBACard": None}
+                slotInfo[slot]=slotUsages[index]
+                PCIeSlotDataDict["slot"]=slot
+                PCIeSlotDataDict["slotUsage"]=slotUsages[index]
+                PCIeSlotDataDict["busAddress"]=busAddresses[index]
+                PCIeSlotData.append(PCIeSlotDataDict)
+    else:
+        f.write("hardware_error")
+        sys.exit()
+        
+    hardware=subprocess.Popen(["cat", "/etc/vdev_id.conf"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            aliasAndBusAddress = re.search("^alias\s+(\d+).*-[0-9a-fA-F]+:([0-9a-fA-F]+):[0-9a-fA-F]+\.[0-9a-fA-F]+-.*$", line)
+            if aliasAndBusAddress != None:
+                for PCIeSlot in PCIeSlotData:
+                    if aliasAndBusAddress.group(2) == PCIeSlot["busAddress"] and aliasAndBusAddress.group(1) != PCIeSlot["aliasStart"]:
+                        PCIeSlot["aliasStart"]=aliasAndBusAddress.group(1)
+                        print(PCIeSlot["aliasStart"])
+    else:
+        f.write("hardware_error")
+        sys.exit()  
+        
+    hardware=subprocess.Popen(["/opt/tools/storcli64", "show", "all"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            for PCIeSlot in PCIeSlotData:
+                HBA = re.search("^\s+\d+\s+SAS(.+)\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+[0-9a-fA-F]+:({BA}):[0-9a-fA-F]+:[0-9a-fA-F]+\s*$".format(BA = PCIeSlot["busAddress"]), line)
+                if HBA != None:
+                    print(HBA)
+                    PCIeSlot["HBACard"]=HBA.group(1)
+                    print(PCIeSlot["HBACard"])
+    else:
+        f.write("hardware_error")
+        sys.exit()
+    print(PCIeSlotData)
+    for PCIeSlot in PCIeSlotData:
+        if PCIeSlot["busAddress"] != None and PCIeSlot["slotUsage"] != None and PCIeSlot["slot"] != None and PCIeSlot["aliasStart"] != None and PCIeSlot["HBACard"] != None:
+            allSlots_string+=PCIeSlot["busAddress"]+" "+PCIeSlot["slotUsage"]+" "+PCIeSlot["slot"]+" "+PCIeSlot["HBACard"]+" "+PCIeSlot["aliasStart"]+" "
+    allSlots_string=allSlots_string.replace(" ", "_")
+    f.write(allSlots_string)
                 
     hardware=subprocess.Popen(["dmidecode", "-t", "17"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     allRAM_string=0
@@ -177,20 +202,21 @@ def main():
             RAM = re.search("^\s+Size:\s+(.*)", line)
             if RAM != None:
                 if RAM.group(1) != "No Module Installed":
-                    print(RAM.group(1))
                     RAM = re.sub("[a-zA-Z]+", "", RAM.group(1))
-                    print(RAM)
                     RAM = RAM.strip()
                     RAM = int(RAM)
                     allRAM_string+=RAM
         allRAM_string=str(allRAM_string)
         allRAM_string="RAM="+allRAM_string
         f.write(allRAM_string)
-                
+    else:
+        f.write("hardware_error")
+        sys.exit() 
+        
 
     f.close()
     
-    testJS[directoryNames[directoryNameIndex]]["hardware"]=mobo_string+cpu_string+hba_string+allSlots_string+allRAM_string
+    testJS[directoryNames[directoryNameIndex]]["hardware"]=mobo_string+cpu_string+allSlots_string+allRAM_string
     
     f=open("/root/benchmarking/BenchMKresults/allResults.json", "w+")     
     json.dump(testJS, f)
