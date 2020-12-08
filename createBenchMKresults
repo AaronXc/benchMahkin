@@ -40,6 +40,7 @@ def checkUnits(regex):
 def main():
     #dict for json
     testJS={}
+    hardwareComponents=[]
     
     if os.path.exists("/root/benchmarking/BenchMKresults"):
         pass
@@ -50,7 +51,7 @@ def main():
         for driveOrder in driveOrders:
             directoryNameIndex = driveOrders.index(driveOrder)+len(driveOrders)*globalSections.index(section)
             if not os.path.exists("./"+directoryNames[directoryNameIndex]):                                 # make sure the directory for the test exists
-                sys.exit("no directory... something went wrong")#panic
+                sys.exit("no directory named {name}".format(name=directoryNames[directoryNameIndex]))#panic
             
             if os.path.exists("/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]):
                 subprocess.run(["rm", "-r", "/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]], universal_newlines=True)
@@ -61,7 +62,7 @@ def main():
             testJS[directoryNames[directoryNameIndex]]["reads"]={}
             testJS[directoryNames[directoryNameIndex]]["writes"]={}
             testJS[directoryNames[directoryNameIndex]]["reads"]["bw"]={}
-            testJS[directoryNames[directoryNameIndex]]["reads"]["iops"]={}
+            testJS[directoryNames[directoryNameIndex]]["reads"]["iops"]={}              #make the format for a json object: use nested dictionaries
             testJS[directoryNames[directoryNameIndex]]["writes"]["bw"]={}
             testJS[directoryNames[directoryNameIndex]]["writes"]["iops"]={}
             testJS[directoryNames[directoryNameIndex]]["hardware"]=None
@@ -70,10 +71,12 @@ def main():
             for i in range(1,len(driveOrder)+1):
                 fname=str(int(i))
                 if os.path.exists("./"+directoryNames[directoryNameIndex]+"/"+fname):
-                    f=open("./"+directoryNames[directoryNameIndex]+"/"+fname, 'r+')
+                    f=open("./"+directoryNames[directoryNameIndex]+"/"+fname, 'r+')         #for every directory, open the files that the results are in 
                     performanceData=f.readlines()
                     f.close()
                     
+                    #regex the ouptut files from the fio tests for the lines containing bandwidth and iops information, and then convert the results to the expected units and format
+                    #for the next part of data analysis
                     for line in performanceData:
                         read_performance = re.search("read:\s+IOPS=(\d+\.*\d+)(.*),\s+BW=(\d+\.*\d+)(\S+)\s+.*$", line)
                         if read_performance != None:
@@ -81,7 +84,7 @@ def main():
                             f=open("/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]+"/reads", "a+")
                             #deal with units
                             IOPS, BW = checkUnits(read_performance)    
-                            f.write("{n}    {io}    {bw}\n".format(n=i, io=IOPS, bw=BW))
+                            f.write("{n},{io},{bw}\n".format(n=i, io=IOPS, bw=BW))
                             f.close()
                             testJS[directoryNames[directoryNameIndex]]["reads"]["bw"][i]=BW
                             testJS[directoryNames[directoryNameIndex]]["reads"]["iops"][i]=IOPS
@@ -90,7 +93,7 @@ def main():
                             f=open("/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]+"/writes", "a+")
                             #deal with units
                             IOPS, BW = checkUnits(write_performance) 
-                            f.write("{n}   {io}    {bw}\n".format(n=i, io=IOPS, bw=BW))
+                            f.write("{n},{io},{bw}\n".format(n=i, io=IOPS, bw=BW))
                             f.close()
                             testJS[directoryNames[directoryNameIndex]]["writes"]["bw"][i]=BW
                             testJS[directoryNames[directoryNameIndex]]["writes"]["iops"][i]=IOPS
@@ -108,9 +111,12 @@ def main():
         for line in hardware:
             mobo = re.search("Product Name:\s+(.+)$", line)
             if mobo != None:
-                mobo_string=mobo.group(1).replace(" ", "_")
+                mobo_string=mobo.group(1)
+                mobo_string=mobo_string.strip()
+                hardwareComponents.append(mobo.group(1).strip())
+                mobo_string=mobo_string.replace(" ", "_")
                 mobo_string=mobo_string+"_"
-                f.write(mobo_string+"_")
+                
     else:
         f.write("hardware_error")
         sys.exit()            
@@ -120,10 +126,10 @@ def main():
         for line in hardware:
             cpu = re.search("^\tVersion:\s+(.+)$", line)
             if cpu != None:
-                cpu = cpu.group(1).replace(" ", "_")
-                cpu_string = re.sub("_@_.*", "", cpu )
+                cpu_string = cpu.group(1).replace(" ", "_")
+                hardwareComponents.append(cpu.group(1).strip())
+                cpu_string = re.sub("_@_.*", "", cpu_string )
                 cpu_string+="_"
-                f.write(cpu_string)
     else:
         f.write("hardware_error")
         sys.exit()     
@@ -139,7 +145,7 @@ def main():
         busAddresses=[]
         for line in hardware:
             slotLackingUsage  = re.search("^\tCurrent Usage: (Available)$", line)
-            slotUsage  = re.search("^\tCurrent Usage: (In Use)$", line)
+            slotUsage  = re.search("^\tCurrent Usage: (In Use)$", line)  #get information on slots: usage, bus address, the slot number (designation)
             busAddress = re.search("^\s+Bus Address:\s+[0-9a-fA-F]+:([0-9a-fA-F]+):[\da-fA-F]+\.[0-9a-fA-F]+$", line)
             slot = re.search("^\tDesignation:\s+(.*)$", line)
             if slot != None:
@@ -162,7 +168,7 @@ def main():
     else:
         f.write("hardware_error")
         sys.exit()
-        
+    #get the alias as named in vdev_id.conf for the bus address of the slots that are in use     
     hardware=subprocess.Popen(["cat", "/etc/vdev_id.conf"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     if hardware != None:
         for line in hardware:
@@ -175,7 +181,7 @@ def main():
     else:
         f.write("hardware_error")
         sys.exit()  
-        
+    #get the HBA card model that is used in the slot with the bus addresses that have been identified as in use    
     hardware=subprocess.Popen(["/opt/tools/storcli64", "show", "all"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     if hardware != None:
         for line in hardware:
@@ -183,7 +189,7 @@ def main():
                 HBA = re.search("^\s+\d+\s+SAS(.+)\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+[0-9a-fA-F]+:({BA}):[0-9a-fA-F]+:[0-9a-fA-F]+\s*$".format(BA = PCIeSlot["busAddress"]), line)
                 if HBA != None:
                     print(HBA)
-                    PCIeSlot["HBACard"]=HBA.group(1)
+                    PCIeSlot["HBACard"]=HBA.group(1).strip()
                     print(PCIeSlot["HBACard"])
     else:
         f.write("hardware_error")
@@ -192,9 +198,7 @@ def main():
     for PCIeSlot in PCIeSlotData:
         if PCIeSlot["busAddress"] != None and PCIeSlot["slotUsage"] != None and PCIeSlot["slot"] != None and PCIeSlot["aliasStart"] != None and PCIeSlot["HBACard"] != None:
             allSlots_string+=PCIeSlot["busAddress"]+" "+PCIeSlot["slotUsage"]+" "+PCIeSlot["slot"]+" "+PCIeSlot["HBACard"]+" "+PCIeSlot["aliasStart"]+" "
-    allSlots_string=allSlots_string.replace(" ", "_")
-    f.write(allSlots_string)
-                
+            hardwareComponents.append(PCIeSlot["busAddress"]+" "+PCIeSlot["slotUsage"]+" "+PCIeSlot["slot"]+" "+PCIeSlot["HBACard"]+" "+PCIeSlot["aliasStart"])
     hardware=subprocess.Popen(["dmidecode", "-t", "17"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     allRAM_string=0
     if hardware != None:
@@ -208,15 +212,27 @@ def main():
                     allRAM_string+=RAM
         allRAM_string=str(allRAM_string)
         allRAM_string="RAM="+allRAM_string
-        f.write(allRAM_string)
+        hardwareComponents.append(allRAM_string)
     else:
         f.write("hardware_error")
         sys.exit() 
-        
-
+    #tidy up the string that will be used to identify the hardware used for a test 
+    hardwareInfo=mobo_string+cpu_string+allSlots_string+allRAM_string
+    hardwareInfo=hardwareInfo.replace(" ", "_")
+    hardwareInfo=hardwareInfo.replace("_In_Use_", "")
+    hardwareInfo=hardwareInfo.replace("PCI-E_3.0", "")
+    hardwareInfo=hardwareInfo.replace("CPU", "")
+    hardwareInfo=hardwareInfo.replace("", "")
+    hardwareInfo=hardwareInfo.replace("PCH", "")
+    hardwareInfo=hardwareInfo.replace("__", "_")
+    f.write(hardwareInfo)   
+    f.write("\n")
+    for component in hardwareComponents:
+        f.write(component)
+        f.write('\n')
     f.close()
     
-    testJS[directoryNames[directoryNameIndex]]["hardware"]=mobo_string+cpu_string+allSlots_string+allRAM_string
+    testJS[directoryNames[directoryNameIndex]]["hardware"]=hardwareInfo
     
     f=open("/root/benchmarking/BenchMKresults/allResults.json", "w+")     
     json.dump(testJS, f)
