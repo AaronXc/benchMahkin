@@ -37,7 +37,7 @@ def generateAliases(card,drive,addr,bay):
             conf_file.write(line)
             
     elif card == "16i9405W":
-        drive_number = 1
+        drive_number = 0
         for phy in alias16i9405W[drive]:
             line = "alias {b}-{dn}\t/dev/disk/by-path/pci-0000:{a}:00.0-sas-phy{p}-lun-0\n".format(b=bay,dn=drive_number,a=addr,p=phy)
             drive_number += 1

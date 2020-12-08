@@ -356,7 +356,7 @@ alternatingPorts=[
 			 
 	"/dev/1-3",
 			 
-	"/dev/1-4",
+	"/dev/1-2",
 			 
 	"/dev/1-13", 
 	
@@ -388,7 +388,7 @@ alternatingPorts=[
 			 
 	"/dev/2-3",
 			 
-	"/dev/2-4",
+	"/dev/2-2",
 			 
 	"/dev/2-13",
 	        
@@ -437,9 +437,9 @@ alternatingPortsAndCards=[
 	
 	"/dev/2-3",
 			 
-	"/dev/1-4",
+	"/dev/1-2",
 				 
-	"/dev/2-4",
+	"/dev/2-2",
 			 
 	"/dev/1-13", 
 	
