@@ -1,6 +1,6 @@
 
-
-
+# drive orders for the lsi 9305-16i HBA card
+"""
 noAlternating=[
 	
     "/dev/1-1", 
@@ -266,6 +266,282 @@ alternatingCards=[
 	
 	"/dev/2-16"]
     
+# end drive orders for the lsi 9305-16i HBA card
+"""  
+#drive orders for other hba cards
+
+# lsi 9405W-16i
+
+noAlternating=[
+
+    "/dev/1-9", 
+			
+	"/dev/1-11", 
+			
+	"/dev/1-13", 
+			
+	"/dev/1-15", 
+			
+	"/dev/1-8", 
+			
+	"/dev/1-10", 
+			
+	"/dev/1-12", 
+			
+	"/dev/1-14",
+			
+    "/dev/1-1",
+			
+	"/dev/1-3", 
+			
+	"/dev/1-5",
+			
+	"/dev/1-7",
+			
+	"/dev/1-0",
+			
+	"/dev/1-2",
+			
+	"/dev/1-4",
+			
+	"/dev/1-6",
+			
+	"/dev/2-9", 
+			
+	"/dev/2-11", 
+			
+	"/dev/2-13", 
+			
+	"/dev/2-15", 
+			
+	"/dev/2-8",  
+			
+	"/dev/2-10", 
+			
+	"/dev/2-12", 
+			
+	"/dev/2-14", 
+			
+    "/dev/2-1",
+			
+	"/dev/2-3",  
+			
+	"/dev/2-5",
+			
+	"/dev/2-7",
+			
+	"/dev/2-0",
+			
+	"/dev/2-2",
+			
+	"/dev/2-4",
+			
+	"/dev/2-6"
+    
+    ]
+    
+alternatingPorts=[	
+    
+    "/dev/1-9", 
+ 			 
+	"/dev/1-8", 
+			 
+	"/dev/1-1", 
+			 
+	"/dev/1-0",  
+			 
+	"/dev/1-11", 
+			 
+	"/dev/1-10",
+			 
+	"/dev/1-3",
+			 
+	"/dev/1-4",
+			 
+	"/dev/1-13", 
+	
+	"/dev/1-12", 
+			 
+	"/dev/1-5", 
+    
+	"/dev/1-4", 
+    
+    "/dev/1-15",
+
+    "/dev/1-14",
+	
+    "/dev/1-7",
+			 
+	"/dev/1-6", 
+	
+	"/dev/2-9", 
+ 			 
+	"/dev/2-8", 
+			 
+	"/dev/2-1", 
+			 
+	"/dev/2-0",   
+			 
+	"/dev/2-11",
+			 
+	"/dev/2-10",
+			 
+	"/dev/2-3",
+			 
+	"/dev/2-4",
+			 
+	"/dev/2-13",
+	        
+	"/dev/2-12",
+			 
+	"/dev/2-5",  
+            
+	"/dev/2-4",  
+            
+    "/dev/2-15",
+            
+    "/dev/2-14",
+	        
+    "/dev/2-7",
+			 
+	"/dev/2-6", 
+	]
+    
+alternatingPortsAndCards=[
+
+	"/dev/1-9", 
+		
+	"/dev/2-9",
+ 			 
+	"/dev/1-8", 
+	 			 
+	"/dev/2-8", 
+			 
+	"/dev/1-1", 
+				 
+	"/dev/2-1",
+			 
+	"/dev/1-0", 
+			 
+	"/dev/2-0",	
+			 
+	"/dev/1-11",
+
+	"/dev/2-11",	
+			 
+	"/dev/1-10",
+	
+	"/dev/2-10",
+			 
+	"/dev/1-3",
+	
+	"/dev/2-3",
+			 
+	"/dev/1-4",
+				 
+	"/dev/2-4",
+			 
+	"/dev/1-13", 
+	
+	"/dev/2-13",
+	
+	"/dev/1-12",
+
+	"/dev/2-12",	
+			 
+	"/dev/1-5",
+			 
+	"/dev/2-5", 	
+    
+	"/dev/1-4", 
+	
+	"/dev/2-4", 
+    
+    "/dev/1-15",
+	            
+    "/dev/2-15",
+
+    "/dev/1-14",
+		            
+    "/dev/2-14",
+	
+    "/dev/1-7",
+		        
+    "/dev/2-7",
+			 
+	"/dev/1-6",
+			 
+	"/dev/2-6" 
+	
+	]
+
+alternatingCards=[
+
+    "/dev/1-9", 
+				
+	"/dev/2-9", 
+			
+	"/dev/1-11", 
+				
+	"/dev/2-11",
+			
+	"/dev/1-13", 
+				
+	"/dev/2-13", 
+			
+	"/dev/1-15", 
+				
+	"/dev/2-15",
+			
+	"/dev/1-8",
+			
+	"/dev/2-8", 	
+			
+	"/dev/1-10", 
+				
+	"/dev/2-10",
+			
+	"/dev/1-12",
+			
+	"/dev/2-12",	
+			
+	"/dev/1-14",
+				
+	"/dev/2-14", 
+			
+    "/dev/1-1",
+				
+    "/dev/2-1",
+			
+	"/dev/1-3", 
+				
+	"/dev/2-3", 
+			
+	"/dev/1-5",
+				
+	"/dev/2-5",
+			
+	"/dev/1-7",
+	 		
+	"/dev/2-7",
+			
+	"/dev/1-0",
+				
+	"/dev/2-0",
+			
+	"/dev/1-2",
+				
+	"/dev/2-2",
+			
+	"/dev/1-4",
+				
+	"/dev/2-4",
+			
+	"/dev/1-6",
+			
+	"/dev/2-6"
+    
+    ]
 driveOrders=[noAlternating, alternatingPorts, alternatingCards, alternatingPortsAndCards]
 
 directoryNames=[
@@ -307,7 +583,11 @@ globalSection3 = "[global]\n \
 			numjobs=1\n\
 			group_reporting\n"
             
-globalSections= [globalSection, globalSection2, globalSection3]
+globalSections= [globalSection]
+#, globalSection2, globalSection3]
 				
-				
+                
+                
+
+    
 				
