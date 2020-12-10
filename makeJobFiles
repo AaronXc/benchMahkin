@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+
+import subprocess
+import re
+import os
+import sys
+from benchMKscriptVars import noAlternating, alternatingPorts, alternatingPortsAndCards, alternatingCards, directoryNames, globalSection, globalSection2, globalSection3, globalSections, driveOrders
+"""
+to do:
+
+figure out how to save the results -check
+
+store all of the jobs that are needed -check
+
+write a job file global section -check
+
+add the parts of the job file incrementally -check
+"""
+
+drivesPerJob=2
+    
+#   create the directory for each test
+#   make the job files for each test in that directory
+#   make a job file for every job in range 1:len(driveOrder)
+#   run all the job files in a bash script
+#   using the bash script, run a test to make the tab separated file for EXCEL plotting
+   
+def main(): 
+
+    fioCommands = "./allCommands"
+    f=open(fioCommands, "w+")
+    f.write("#!/usr/bin/bash\n")
+    f.close()
+    
+    for section in globalSections:
+        for driveOrder in driveOrders:
+        
+            directoryNameIndex = ((driveOrders.index(driveOrder)+1)+len(driveOrders)*globalSections.index(section))-1
+            if not os.path.exists("./"+directoryNames[directoryNameIndex]):                                 # make the directory for the test
+                os.mkdir("./"+directoryNames[directoryNameIndex])
+            
+            jobs=int(len(driveOrder)/drivesPerJob)
+            for i in range(1,len(driveOrder)+1):
+                jobFile = "./"+directoryNames[directoryNameIndex]+"/FioTest"+str(i)
+                f=open(jobFile, "w+")
+                f.write(section)	
+                f.close()
+                
+                for k in range(0, int(i/drivesPerJob)):
+                #fill all the jobs
+                    f=open(jobFile, "a+")
+                    f.write("[job"+str(k+1)+"]\n")
+                    f.close()
+                    for l in range(0, drivesPerJob): 
+                        f=open(jobFile, "a+")
+                        f.write("filename="+driveOrder[l+(k)*drivesPerJob]+"\n")
+                        f.close() 
+                if i%drivesPerJob == 0:
+                    pass
+                else:
+                    f=open(jobFile, "a+")
+                    f.write("[job"+str(int(i/drivesPerJob)+1)+"]\n")
+                    f.close()
+                    f=open(jobFile, "a+")
+                    for j in range(1, int(i%drivesPerJob+1)): 
+                        f.write("filename="+driveOrder[int(i/drivesPerJob)*drivesPerJob+j-1]+"\n")
+                    f.close() 
+                    
+                outputFile="./"+directoryNames[directoryNameIndex]+"/"+str(i)
+                f=open(fioCommands, "a+")
+                f.write("fio "+jobFile+" --output="+outputFile+"\n")
+                f.close()
+            #create the command to run fioTest_N and put the results in N   
+
+if __name__ == "__main__":
+        main()

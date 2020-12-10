@@ -116,24 +116,109 @@ def main():
                 hardwareComponents.append(mobo.group(1).strip())
                 mobo_string=mobo_string.replace(" ", "_")
                 mobo_string=mobo_string+"_"
-                
+        hardwareComponents.append(mobo_string)       
     else:
         f.write("hardware_error")
         sys.exit()            
     hardware=subprocess.Popen(["dmidecode", "-t", "4"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     cpu_string=None
+    cpus=[]
+    cpuModels=[]
+    cpuThreads=[]
+    cpuCores=[]
+    totalThreads=0
+    totalCores=0
     if hardware != None:
         for line in hardware:
             cpu = re.search("^\tVersion:\s+(.+)$", line)
-            if cpu != None:
-                cpu_string = cpu.group(1).replace(" ", "_")
-                hardwareComponents.append(cpu.group(1).strip())
-                cpu_string = re.sub("_@_.*", "", cpu_string )
+            if cpu != None:               
+                cpu_string = cpu.group(1).replace(" ", "_")        #cpus[all the types of them, eg  intel 4110...] cores[all the cores] threads[all the threads]
+                cpu_string = re.sub("_@_.*", "", cpu_string )      #hardwareComponents[stuff...... cpus[cpucount, cpu[models, cores, threads], another cpu[cores, threads]]]
                 cpu_string+="_"
+                cpuModels.append(cpu_string)
+                print(cpu_string)
+    hardware=subprocess.Popen(["dmidecode", "-t", "4"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            threads = re.search("^\s+Thread Count:\s+(.+)", line)
+            if threads != None:
+                cpuThreads.append(threads.group(1).strip())
+                print(threads.group(1))
+    hardware=subprocess.Popen(["dmidecode", "-t", "4"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            cores = re.search("^\s+Core Count:\s+(.+)", line)
+            if cores != None:
+                cpuCores.append(cores.group(1).strip())
+                print(cores.group(1))
     else:
         f.write("hardware_error")
-        sys.exit()     
-
+        sys.exit()
+    ########## put the threads, cores, and models hardwareComponents[cpus] as dictionaries for every cpu on the motherboard ###########################################
+    ############# also, get the total number of cores and threads######################################################################################################
+    if len(cpuModels) == len(cpuThreads) == len(cpuCores):
+        for model in cpuModels:
+            empty={"model": None,"threads": None, "cores": None}
+            cpus.append(empty)
+            cpus[cpuModels.index(model)]["model"]=model
+        for thread in cpuThreads:
+            totalThreads+=int(thread)
+            cpus[cpuThreads.index(thread)]["threads"]=thread
+        for core  in cpuCores:
+            totalCores+=int(core)
+            cpus[cpuCores.index(core)]["cores"]=core
+    cpu_count=len(cpus)
+    hardwareComponents.append(cpu_count)
+    ############# remove duplicate cpus from the list of dictionaries##################################################################################################
+    for cpu in cpus:
+        marker=cpu
+        cpus.remove(cpu)
+        cpus.insert(0, "placeholderA")
+        for other_cpu in cpus:
+            if other_cpu == marker:
+                cpus.remove[other_cpu]
+                cpus.insert(0, "placeholderB")
+        cpus[0]=marker
+        print(cpus)
+    ########## check if there is more than one model of cpu (there is of there is more than one cpu dict in hardwareComponents[cpus]####################################
+    ########## if there is more than one model, make note of that so other programs can deal with it, but don't exit because the other info from this script could still
+    ########## be useful. if there is only one model, keep track of the total threads and the total cores###############################################################
+    ########## having more than one cpu model is a problem because the libreOffice calc sheet that this is for has only 1 place for 1 model of cpu######################
+    while "placeholderA" in cpus and len(cpus) != 0:
+        cpus.remove("placeholderA")
+    while "placeholderB" in cpus and len(cpus) != 0:
+        cpus.remove("placeholderB")
+        
+    if len(cpus) != 1 and len(cpus) != 0:
+        cpus[0]={"model": "multiple", "threads": str(totalThreads), "cores": str(totalCores)}
+        for i in range(1, (len(cpus)-1)):
+            cpus.remove(cpus[i])
+    elif len(cpus) != 0:
+        cpus[0]["threads"]=str(totalThreads)
+        cpus[0]["cores"]=str(totalCores)
+    else:
+        cpus.append({"model": "none", "threads": "none", "cores": "none"})
+    cpu_info=cpus[0]
+    hardwareComponents.append(cpu_info)
+    
+    hardware=subprocess.Popen(["dmidecode", "-t", "17"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    allRAM_string=0
+    if hardware != None:
+        for line in hardware:
+            RAM = re.search("^\s+Size:\s+(.*)", line)
+            if RAM != None:
+                if RAM.group(1) != "No Module Installed":
+                    RAM = re.sub("[a-zA-Z]+", "", RAM.group(1))
+                    RAM = RAM.strip()
+                    RAM = int(RAM)
+                    allRAM_string+=RAM
+        allRAM_string=str(allRAM_string)
+        allRAM_string="RAM_(GB)="+allRAM_string
+        hardwareComponents.append(allRAM_string)        
+    else:
+        f.write("hardware_error")
+        sys.exit() 
+        
     hardware=subprocess.Popen(["dmidecode", "-t", "9"], stdout=subprocess.PIPE, universal_newlines=True).stdout
     PCIeSlotData=[]
     allSlots_string=""
@@ -177,7 +262,6 @@ def main():
                 for PCIeSlot in PCIeSlotData:
                     if aliasAndBusAddress.group(2) == PCIeSlot["busAddress"] and aliasAndBusAddress.group(1) != PCIeSlot["aliasStart"]:
                         PCIeSlot["aliasStart"]=aliasAndBusAddress.group(1)
-                        print(PCIeSlot["aliasStart"])
     else:
         f.write("hardware_error")
         sys.exit()  
@@ -188,34 +272,15 @@ def main():
             for PCIeSlot in PCIeSlotData:
                 HBA = re.search("^\s+\d+\s+[a-zA-Z]+(.+)\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+[0-9a-fA-F]+:({BA}):[0-9a-fA-F]+:[0-9a-fA-F]+\s*$".format(BA = PCIeSlot["busAddress"]), line)
                 if HBA != None:
-                    print(HBA)
                     PCIeSlot["HBACard"]=HBA.group(1).strip()
-                    print(PCIeSlot["HBACard"])
     else:
         f.write("hardware_error")
         sys.exit()
-    print(PCIeSlotData)
     for PCIeSlot in PCIeSlotData:
         if PCIeSlot["busAddress"] != None and PCIeSlot["slotUsage"] != None and PCIeSlot["slot"] != None and PCIeSlot["aliasStart"] != None and PCIeSlot["HBACard"] != None:
             allSlots_string+=PCIeSlot["busAddress"]+" "+PCIeSlot["slotUsage"]+" "+PCIeSlot["slot"]+" "+PCIeSlot["HBACard"]+" "+PCIeSlot["aliasStart"]+" "
-            hardwareComponents.append(PCIeSlot["busAddress"]+" "+PCIeSlot["slotUsage"]+" "+PCIeSlot["slot"]+" "+PCIeSlot["HBACard"]+" "+PCIeSlot["aliasStart"])
-    hardware=subprocess.Popen(["dmidecode", "-t", "17"], stdout=subprocess.PIPE, universal_newlines=True).stdout
-    allRAM_string=0
-    if hardware != None:
-        for line in hardware:
-            RAM = re.search("^\s+Size:\s+(.*)", line)
-            if RAM != None:
-                if RAM.group(1) != "No Module Installed":
-                    RAM = re.sub("[a-zA-Z]+", "", RAM.group(1))
-                    RAM = RAM.strip()
-                    RAM = int(RAM)
-                    allRAM_string+=RAM
-        allRAM_string=str(allRAM_string)
-        allRAM_string="RAM="+allRAM_string
-        hardwareComponents.append(allRAM_string)
-    else:
-        f.write("hardware_error")
-        sys.exit() 
+    hardwareComponents.append(PCIeSlotData)
+    
     #tidy up the string that will be used to identify the hardware used for a test 
     hardwareInfo=mobo_string+cpu_string+allSlots_string+allRAM_string
     hardwareInfo=hardwareInfo.replace(" ", "_")
@@ -228,8 +293,28 @@ def main():
     f.write(hardwareInfo)   
     f.write("\n")
     for component in hardwareComponents:
-        f.write(component)
-        f.write('\n')
+        if component==PCIeSlotData:
+            for PCIeSlot in PCIeSlotData:
+                PCIeSlotKeys = PCIeSlot.keys()
+                if PCIeSlot["busAddress"] != None and PCIeSlot["slotUsage"] != None and PCIeSlot["slot"] != None and PCIeSlot["aliasStart"] != None and PCIeSlot["HBACard"] != None:
+                            f.write("HBA_Card_"+PCIeSlot["aliasStart"]+"\n")
+                            f.write("Bus Address"+PCIeSlot["aliasStart"]+"="+PCIeSlot["busAddress"]+"\n")
+                            f.write("slot"+PCIeSlot["aliasStart"]+"="+PCIeSlot["slot"]+"\n")
+                            f.write("Model"+PCIeSlot["aliasStart"]+"="+PCIeSlot["HBACard"]+"\n")                           
+        else:
+            if component == mobo_string:
+                f.write("Motherboard_Model="+component+"\n")
+            if component == cpu_string:
+                f.write("CPU_Type="+component+"\n")
+            if component == allRAM_string:
+                f.write(component+"\n")
+            if component == cpu_info:
+                f.write("CPU_Type="+cpu_info["model"]+"\n")
+                f.write("threads="+cpu_info["threads"]+"\n")
+                f.write("cores="+cpu_info["cores"]+"\n")             
+            if component == cpu_count:
+                f.write("CPU_qty="+str(cpu_count)+"\n")
+                             
     f.close()
     
     testJS[directoryNames[directoryNameIndex]]["hardware"]=hardwareInfo

@@ -1,4 +1,3 @@
-
 # drive orders for the lsi 9305-16i HBA card
 """
 noAlternating=[
@@ -549,6 +548,14 @@ directoryNames=[
                 "write_noAlt", "write_altPorts", "write_altCards", "write_altPortsAndCards",
                 "randrw_noAlt", "randrw_altPorts", "randrw_altCards", "randrw_altPortsAndCards"
                 ]
+                
+orderToNameMap={
+                "read_noAlt": "noAlternating", "read_altPorts": "alternatingPorts", "read_altCards": "alternatingCards", "read_altPortsAndCards": "alternatingPortsAndCards",
+                "write_noAlt": "noAlternating", "write_altPorts": "alternatingPorts", "write_altCards": "alternatingCards", "write_altPortsAndCards": "alternatingPortsAndCards",
+                "randrw_noAlt": "noAlternating", "randrw_altPorts": "alternatingPorts", "randrw_altCards": "alternatingCards", "randrw_altPortsAndCards": "alternatingPortsAndCards"
+                }
+                
+
 	
 globalSection = "[global]\n \
 			name=name\n \
@@ -583,10 +590,13 @@ globalSection3 = "[global]\n \
 			numjobs=1\n\
 			group_reporting\n"
             
-globalSections= [globalSection]
-#, globalSection2, globalSection3]
+globalSections= [globalSection, globalSection2, globalSection3]
 				
-                
+sectionToNameMap={
+                "read_noAlt": globalSections[0], "read_altPorts": globalSections[0], "read_altCards": globalSections[0], "read_altPortsAndCards": globalSections[0],
+                "write_noAlt": globalSections[1], "write_altPorts": globalSections[1], "write_altCards": globalSections[1], "write_altPortsAndCards": globalSections[1],
+                "randrw_noAlt": globalSections[2], "randrw_altPorts": globalSections[2], "randrw_altCards": globalSections[2], "randrw_altPortsAndCards": globalSections[2]
+                }              
                 
 
     

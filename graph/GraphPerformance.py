@@ -57,7 +57,7 @@ for directoryName in directoryNames:
             hardware.close()
             lines+=fioGlobalSection
             lines.append(directoryName)
-
+            lines=[line for line in lines[1:(len(lines)-1)]]
             for line in lines:
                 line=line.strip()
                 line=line.replace("=", ",")
