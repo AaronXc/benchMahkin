@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2020-12-13T22:47:54.866Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" etag="BJkkA27HDP57B53nIqIN" version="14.0.1" type="github">
+<mxfile host="app.diagrams.net" modified="2020-12-13T22:57:12.798Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" etag="mOcTMJNatxopbkBEcRTY" version="14.0.1" type="github">
   <diagram name="Page-1" id="2c0d36ab-eaac-3732-788b-9136903baeff">
-    <mxGraphModel dx="748" dy="301" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1.5" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
+    <mxGraphModel dx="1549" dy="624" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1.5" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -197,7 +197,7 @@
           <mxGeometry x="1150" y="650" width="130" height="60" as="geometry" />
         </mxCell>
         <mxCell id="cr9FANzja6UJMiHbJ5yW-157" value="hardware description&#xa;format: motherboard_CPU_type_Slot_HBA_card_&#xa;PCIe_width_vdev_id.conf_alias_total_RAM" style="rounded=1;fillColor=#23445D;gradientColor=none;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontFamily=Tahoma;fontSize=14" vertex="1" parent="1">
-          <mxGeometry x="1345" y="395.5" width="380" height="80" as="geometry" />
+          <mxGeometry x="1345" y="370" width="380" height="80" as="geometry" />
         </mxCell>
         <mxCell id="cr9FANzja6UJMiHbJ5yW-162" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;strokeWidth=2;rounded=0" edge="1" parent="1" target="cr9FANzja6UJMiHbJ5yW-155">
           <mxGeometry x="620" y="320" width="100" height="100" as="geometry">
@@ -210,19 +210,19 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="cr9FANzja6UJMiHbJ5yW-163" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;strokeWidth=2;rounded=0;entryX=0.513;entryY=0.009;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="cr9FANzja6UJMiHbJ5yW-157">
-          <mxGeometry x="1000" y="80" width="100" height="100" as="geometry">
-            <mxPoint x="1540" y="360" as="sourcePoint" />
-            <mxPoint x="1680" y="400" as="targetPoint" />
+        <mxCell id="cr9FANzja6UJMiHbJ5yW-163" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;strokeWidth=2;rounded=0;" edge="1" parent="1">
+          <mxGeometry x="994.71" y="70" width="100" height="100" as="geometry">
+            <mxPoint x="1534.71" y="350" as="sourcePoint" />
+            <mxPoint x="1534.71" y="370" as="targetPoint" />
             <Array as="points">
-              <mxPoint x="1620" y="370" />
+              <mxPoint x="1534.71" y="370" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="cr9FANzja6UJMiHbJ5yW-164" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;strokeWidth=2;rounded=0;entryX=0.52;entryY=0.007;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="cr9FANzja6UJMiHbJ5yW-152">
+        <mxCell id="cr9FANzja6UJMiHbJ5yW-164" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;strokeWidth=2;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.516;entryY=0.006;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="cr9FANzja6UJMiHbJ5yW-143" target="cr9FANzja6UJMiHbJ5yW-152">
           <mxGeometry x="940" y="-30" width="100" height="100" as="geometry">
-            <mxPoint x="1536" y="240" as="sourcePoint" />
-            <mxPoint x="1620" y="290" as="targetPoint" />
+            <mxPoint x="1536" y="250" as="sourcePoint" />
+            <mxPoint x="1536" y="266" as="targetPoint" />
             <Array as="points">
               <mxPoint x="1500" y="256" />
             </Array>
