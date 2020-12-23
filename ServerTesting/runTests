@@ -1,0 +1,17 @@
+#!/usr/bin/bash
+
+#run the python script to generate all the job files and results files' names
+#run all the tests in a testing directory, then move on to the next directory : ls -al | grep "([a-zA-z]+\d+)$" > fileName | wc -l -> while i < wc -l run the test (use the head and tail commands, redirect to fio string)
+# scratch that, just make a file with lists of commands in the python script, then run them as a bash script
+
+chmod +x makeJobFiles
+
+./makeJobFiles
+
+chmod +x allCommands
+
+./allCommands
+
+chmod +x createBenchMKresults
+
+./createBenchMKresults

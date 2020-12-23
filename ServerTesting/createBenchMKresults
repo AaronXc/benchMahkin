@@ -1,0 +1,398 @@
+#!/usr/bin/env python3
+
+#get the bench mark results from fio's individual output files and put them in a new directory called BenchMKresults. In subdirectories, sort the results into files
+
+import subprocess
+import re
+import os
+import sys
+import json
+from benchMKscriptVars import noAlternating, alternatingPorts, alternatingPortsAndCards, alternatingCards, directoryNames, globalSection, globalSection2, globalSection3, globalSections, driveOrders
+###########################################################################################################################################################################   
+#   getCPUInfo
+# args: hardwareComponents: the list that contains information for hardware components, in strings, except the information for the HBA cards, which is a list containing a dictionary 
+#       for each HBA card's information.
+#       f: f is the file that is open to write in, the file in the benchMKresults directory named "hardware"
+# desc: get the CPU model, thread count, core count, and CPU qty. If CPU qty is greater than one, the model is reported as multiple. Put this information in a dictionary and put the 
+#       dictionary in the hardwareComponents list. Get the CPU model and return it as a string as well.
+#
+# returns: cpu_string (string containing cpu info), hardwareComponents, and cpu_info (a dictionary containing the model, thread count, and core count for the CPU), and
+#          cpu_count (the number of cpus that are on the motherboard) 
+###########################################################################################################################################################################
+def getCPUInfo(hardwareComponents, f):
+    hardware=subprocess.Popen(["dmidecode", "-t", "4"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    cpu_string=None
+    cpus=[] # use to store the data found for each cpu on the motherboard
+    cpuModels=[] # use to temporarily store the Models found using dmidecode
+    cpuThreads=[] # use to temporariily store the threads found using dmidecode
+    cpuCores=[] # use to temporarily store the cores found using dmidecode
+    totalThreads=0 #the sum of all threads
+    totalCores=0 # the sum of all cores
+    if hardware != None:
+        for line in hardware:
+            cpu = re.search("^\tVersion:\s+(.+)$", line)
+            if cpu != None:               
+                cpu_string = cpu.group(1).replace(" ", "_")        #cpus[all the types of them, eg  intel 4110...] cores[all the cores] threads[all the threads]
+                cpu_string = re.sub("_@_.*", "", cpu_string )      #hardwareComponents[stuff...... cpus[cpucount, cpu[models, cores, threads], another cpu[cores, threads]]]
+                cpu_string+="_"
+                cpuModels.append(cpu_string)
+                print(cpu_string)
+    hardware=subprocess.Popen(["dmidecode", "-t", "4"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            threads = re.search("^\s+Thread Count:\s+(.+)", line)
+            if threads != None:
+                cpuThreads.append(threads.group(1).strip())
+                print(threads.group(1))
+    hardware=subprocess.Popen(["dmidecode", "-t", "4"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            cores = re.search("^\s+Core Count:\s+(.+)", line)
+            if cores != None:
+                cpuCores.append(cores.group(1).strip())
+                print(cores.group(1))
+    else:
+        f.write("hardware_error")
+        sys.exit()
+    ########## put the threads, cores, and models hardwareComponents[cpus] as dictionaries for every cpu on the motherboard ###########################################
+    ############# also, get the total number of cores and threads######################################################################################################
+    if len(cpuModels) == len(cpuThreads) == len(cpuCores):
+        for model in cpuModels:
+            empty={"model": None,"threads": None, "cores": None}
+            cpus.append(empty)
+            cpus[cpuModels.index(model)]["model"]=model
+        for thread in cpuThreads:
+            totalThreads+=int(thread)
+            cpus[cpuThreads.index(thread)]["threads"]=thread
+        for core  in cpuCores:
+            totalCores+=int(core)
+            cpus[cpuCores.index(core)]["cores"]=core
+    cpu_count=len(cpus)
+    hardwareComponents.append(cpu_count)
+    ############# remove duplicate cpus from the list of dictionaries##################################################################################################
+    for cpu in cpus:
+        marker=cpu
+        cpus.remove(cpu)
+        cpus.insert(0, "placeholderA")
+        for other_cpu in cpus:
+            if other_cpu == marker:
+                cpus.remove[other_cpu]
+                cpus.insert(0, "placeholderB")
+        cpus[0]=marker
+        print(cpus)
+    ########## check if there is more than one model of cpu (there is of there is more than one cpu dict in hardwareComponents[cpus]####################################
+    ########## if there is more than one model, make note of that so other programs can deal with it, but don't exit because the other info from this script could still
+    ########## be useful. if there is only one model, keep track of the total threads and the total cores###############################################################
+    ########## having more than one cpu model is a problem because the libreOffice calc sheet that this is for has only 1 place for 1 model of cpu######################
+    while "placeholderA" in cpus and len(cpus) != 0:
+        cpus.remove("placeholderA")
+    while "placeholderB" in cpus and len(cpus) != 0:
+        cpus.remove("placeholderB")
+        
+    if len(cpus) != 1 and len(cpus) != 0:
+        cpus[0]={"model": "multiple", "threads": str(totalThreads), "cores": str(totalCores)}
+        for i in range(1, (len(cpus)-1)):
+            cpus.remove(cpus[i])
+    elif len(cpus) != 0:
+        cpus[0]["threads"]=str(totalThreads)
+        cpus[0]["cores"]=str(totalCores)
+    else:
+        cpus.append({"model": "none", "threads": "none", "cores": "none"})
+    cpu_info=cpus[0]
+    hardwareComponents.append(cpu_info)
+
+    return cpu_string, hardwareComponents, cpu_info, cpu_count
+###########################################################################################################################################################################
+#   getMoboInfo
+# args: hardwareComponents: the list that contains information for hardware components, in strings, except the information for the HBA cards, which is a list containing a dictionary 
+#       for each HBA card's information.
+#       f: f is the file that is open to write in, the file in the benchMKresults directory named "hardware"
+# desc: get the Motherboard Model. Put the motherboard model in the hardwareComponents list.
+#
+# returns: mobo string (string containing motherboard model) and hardwareComponents 
+###########################################################################################################################################################################
+def getMoboInfo(hardwareComponents, f):
+    
+    hardware=subprocess.Popen(["dmidecode", "-t", "2"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    mobo_string=None
+    if hardware != None:
+        for line in hardware:
+            mobo = re.search("Product Name:\s+(.+)$", line)
+            if mobo != None:
+                mobo_string=mobo.group(1)
+                mobo_string=mobo_string.strip()
+                hardwareComponents.append(mobo.group(1).strip())
+                mobo_string=mobo_string.replace(" ", "_")
+                mobo_string=mobo_string+"_"
+        hardwareComponents.append(mobo_string)       
+    else:
+        f.write("hardware_error")
+        sys.exit() 
+
+    return mobo_string, hardwareComponents
+###########################################################################################################################################################################
+#   getRAMInfo
+# args: hardwareComponents: the list that contains information for hardware components, in strings, except the information for the HBA cards, which is a list containing a dictionary 
+#       for each HBA card's information.
+#       f: f is the file that is open to write in, the file in the benchMKresults directory named "hardware"
+# desc: sum the total RAM on the motherboard
+#
+# returns: allRAM_string (string containing the sum of all the RAM on the motherboard) and hardwareComponents
+###########################################################################################################################################################################
+def getRAMInfo(hardwareComponents, f):
+    hardware=subprocess.Popen(["dmidecode", "-t", "17"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    allRAM_string=0
+    if hardware != None:
+        for line in hardware:
+            RAM = re.search("^\s+Size:\s+(.*)", line)
+            if RAM != None:
+                if RAM.group(1) != "No Module Installed":
+                    RAM = re.sub("[a-zA-Z]+", "", RAM.group(1))
+                    RAM = RAM.strip()
+                    RAM = int(RAM)
+                    allRAM_string+=RAM
+        allRAM_string=str(allRAM_string)
+        allRAM_string="RAM_(GB)="+allRAM_string
+        hardwareComponents.append(allRAM_string)        
+    else:
+        f.write("hardware_error")
+        sys.exit() 
+    return allRAM_string, hardwareComponents
+###########################################################################################################################################################################
+#   getSlotInfo
+# args: hardwareComponents: the list that contains information for hardware components, in strings, except the information for the HBA cards, which is a list containing a dictionary 
+#       for each HBA card's information.
+#       f: f is the file that is open to write in, the file in the benchMKresults directory named "hardware"
+# desc: get information on the HBA cards on the motherboard: the model, the slot number that they are in, the bus address, and match them to their alias in vdev_id.conf
+#
+# returns: allSlots_string (string containing the slot information), hardwareComponents, and PCIeSlotData (information on the PCI slots, in a dictionary)
+###########################################################################################################################################################################
+def getSlotInfo(hardwareComponents, f):
+    
+    hardware=subprocess.Popen(["dmidecode", "-t", "9"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    PCIeSlotData=[]
+    allSlots_string=""
+    if hardware != None:
+        in_use = "_"
+        slots=[] # the PCI slot information including number and size for each PCI slot found goes here
+        slotUsages=[] #the usage of each PCI slot found goes here
+        busAddresses=[] #the bus address for each PCI slot found
+        for line in hardware:
+            slotLackingUsage  = re.search("^\tCurrent Usage: (Available)$", line)
+            slotUsage  = re.search("^\tCurrent Usage: (In Use)$", line)  #get information on slots: usage, bus address, the slot number (designation)
+            busAddress = re.search("^\s+Bus Address:\s+[0-9a-fA-F]+:([0-9a-fA-F]+):[\da-fA-F]+\.[0-9a-fA-F]+$", line)
+            slot = re.search("^\tDesignation:\s+(.*)$", line)
+            if slot != None:
+                slots.append(slot.group(1))
+            if slotUsage != None:
+                slotUsages.append(slotUsage.group(1).strip())
+            if slotLackingUsage != None:
+                slotUsages.append(slotLackingUsage.group(1).strip())
+            if busAddress != None:
+                busAddresses.append(busAddress.group(1))
+        for slot in slots:
+            index = slots.index(slot)
+            if index < len(slotUsages) and slotUsages[index] != None and busAddresses[index] != None and index < len(busAddresses):
+                PCIeSlotDataDict={"busAddress": None, "slotUsage": None, "slot": None, "aliasStart": None, "HBACard": None}
+                PCIeSlotDataDict["slot"]=slot
+                PCIeSlotDataDict["slotUsage"]=slotUsages[index]
+                PCIeSlotDataDict["busAddress"]=busAddresses[index]
+                PCIeSlotData.append(PCIeSlotDataDict)
+    else:
+        f.write("hardware_error")
+        sys.exit()
+    #get the alias as named in vdev_id.conf for the bus address of the slots that are in use     
+    hardware=subprocess.Popen(["cat", "/etc/vdev_id.conf"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            aliasAndBusAddress = re.search("^alias\s+(\d+).*-[0-9a-fA-F]+:([0-9a-fA-F]+):[0-9a-fA-F]+\.[0-9a-fA-F]+-.*$", line)
+            if aliasAndBusAddress != None:
+                for PCIeSlot in PCIeSlotData:
+                    if aliasAndBusAddress.group(2) == PCIeSlot["busAddress"] and aliasAndBusAddress.group(1) != PCIeSlot["aliasStart"]:
+                        PCIeSlot["aliasStart"]=aliasAndBusAddress.group(1)
+    else:
+        f.write("hardware_error")
+        sys.exit()  
+    #get the HBA card model that is used in the slot with the bus addresses that have been identified as in use    
+    hardware=subprocess.Popen(["/opt/tools/storcli64", "show", "all"], stdout=subprocess.PIPE, universal_newlines=True).stdout
+    if hardware != None:
+        for line in hardware:
+            for PCIeSlot in PCIeSlotData:
+                HBA = re.search("^\s+\d+\s+[a-zA-Z]+(.+)\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+.+\s+[0-9a-fA-F]+:({BA}):[0-9a-fA-F]+:[0-9a-fA-F]+\s*$".format(BA = PCIeSlot["busAddress"]), line)
+                if HBA != None:
+                    PCIeSlot["HBACard"]=HBA.group(1).strip()
+    else:
+        f.write("hardware_error")
+        sys.exit()
+    for PCIeSlot in PCIeSlotData:
+        if PCIeSlot["busAddress"] != None and PCIeSlot["slotUsage"] != None and PCIeSlot["slot"] != None and PCIeSlot["aliasStart"] != None and PCIeSlot["HBACard"] != None:
+            allSlots_string+=PCIeSlot["busAddress"]+" "+PCIeSlot["slotUsage"]+" "+PCIeSlot["slot"]+" "+PCIeSlot["HBACard"]+" "+PCIeSlot["aliasStart"]+" "
+    hardwareComponents.append(PCIeSlotData)
+
+    return allSlots_string, hardwareComponents, PCIeSlotData
+
+###########################################################################################################################################################################   
+#   checkUnits
+# args: regex: the object returned by re.search for the bandwidth or IOPS from a fio output file
+# desc: search the object groups for the units and adjust the numbers to account for the units. Bandwidth is converted to MB/s and IOPS to operations per second 
+#
+# returns: IOPS and BW, the numbers for the IOPS and bandwidth, respectively.
+###########################################################################################################################################################################
+def checkUnits(regex):
+    IOPS=regex.group(1)
+    BW=regex.group(3)
+    if regex.group(2) != None:
+        if regex.group(2) == "k":   
+            IOPS=float(IOPS)
+            IOPS*=1024
+            str(IOPS)
+        elif regex.group(2) == "M":
+            IOPS=float(IOPS)
+            IOPS*=1048576
+            str(IOPS)
+    if regex.group(4) != None:
+        if regex.group(4) == "MiB/s":
+            pass
+        elif regex.group(4) == "KiB/s":
+            BW=float(BW)
+            BW=float(BW)
+            BW/=1024
+            str(BW)
+        elif regex.group(4) == "GiB/s":
+            BW=float(BW)
+            BW*=1024
+            str(BW)
+    return IOPS, BW
+
+#########################################################################################################################################################################
+	
+def main():
+    #dict for json
+    testJS={}
+    hardwareComponents=[]
+    
+    if os.path.exists("/root/benchmarking/BenchMKresults"):
+        pass
+    else:
+        os.mkdir("/root/benchmarking/BenchMKresults")
+        
+    for section in globalSections:
+        for driveOrder in driveOrders:
+            directoryNameIndex = driveOrders.index(driveOrder)+len(driveOrders)*globalSections.index(section)
+            if not os.path.exists("./"+directoryNames[directoryNameIndex]):                                 # make sure the directory for the test exists
+                sys.exit("no directory named {name}".format(name=directoryNames[directoryNameIndex]))#panic
+            
+            if os.path.exists("/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]):
+                subprocess.run(["rm", "-r", "/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]], universal_newlines=True)
+                
+            os.mkdir("/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex])             
+
+            testJS[directoryNames[directoryNameIndex]]={}
+            testJS[directoryNames[directoryNameIndex]]["reads"]={}
+            testJS[directoryNames[directoryNameIndex]]["writes"]={}
+            testJS[directoryNames[directoryNameIndex]]["reads"]["bw"]={}
+            testJS[directoryNames[directoryNameIndex]]["reads"]["iops"]={}              #make the format for a json object: use nested dictionaries
+            testJS[directoryNames[directoryNameIndex]]["writes"]["bw"]={}
+            testJS[directoryNames[directoryNameIndex]]["writes"]["iops"]={}
+            testJS[directoryNames[directoryNameIndex]]["hardware"]=None
+            
+            
+            for i in range(1,len(driveOrder)+1):
+                fname=str(int(i))
+                if os.path.exists("./"+directoryNames[directoryNameIndex]+"/"+fname):
+                    f=open("./"+directoryNames[directoryNameIndex]+"/"+fname, 'r+')         #for every directory, open the files that the results are in 
+                    performanceData=f.readlines()
+                    f.close()
+                    
+                    #regex the ouptut files from the fio tests for the lines containing bandwidth and iops information, and then convert the results to the expected units and format
+                    #for the next part of data analysis
+                    for line in performanceData:
+                        read_performance = re.search("read:\s+IOPS=(\d+\.*\d+)(.*),\s+BW=(\d+\.*\d+)(\S+)\s+.*$", line)
+                        if read_performance != None:
+                            
+                            f=open("/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]+"/reads", "a+")
+                            #deal with units
+                            IOPS, BW = checkUnits(read_performance)    
+                            f.write("{n},{io},{bw}\n".format(n=i, io=IOPS, bw=BW))
+                            f.close()
+                            testJS[directoryNames[directoryNameIndex]]["reads"]["bw"][i]=BW
+                            testJS[directoryNames[directoryNameIndex]]["reads"]["iops"][i]=IOPS
+                        write_performance = re.search("write:\s+IOPS=(\d+\.*\d+)(.*),\s+BW=(\d+\.*\d+)(\S+)\s+.*$", line)
+                        if write_performance != None:
+                            f=open("/root/benchmarking/BenchMKresults/BenchMKresults_"+directoryNames[directoryNameIndex]+"/writes", "a+")
+                            #deal with units
+                            IOPS, BW = checkUnits(write_performance) 
+                            f.write("{n},{io},{bw}\n".format(n=i, io=IOPS, bw=BW))
+                            f.close()
+                            testJS[directoryNames[directoryNameIndex]]["writes"]["bw"][i]=BW
+                            testJS[directoryNames[directoryNameIndex]]["writes"]["iops"][i]=IOPS
+                    f.close()   
+        
+    f=open("/root/benchmarking/BenchMKresults/allResults.json", "w+")     
+    json.dump(testJS, f)
+    f.close()
+
+    f=open("/root/benchmarking/BenchMKresults/hardware", "w+")   
+####### fill up the hardwareComponents list with hardware from the motherboard. Use dmidecode, lspci, storcli64, and cat vdev_id.conf as subprocesses to get the motherboard, CPU, 
+####### total threads and cores, total RAM, the bus address, model, slot number, and alias of the HBA cards used. This information will be used to create a unique name for the 
+####### directory that contains the test results. 
+    
+    mobo_string = None
+    mobo_string, hardwareComponents = getMoboInfo(hardwareComponents, f)     
+
+    cpu_string = None
+    cpu_string, hardwareComponents, cpu_info, cpu_count = getCPUInfo(hardwareComponents, f)
+    
+    allRAM_string = None
+    allRAM_string, hardwareComponents = getRAMInfo(hardwareComponents, f) 
+    
+    allSlots_string = None
+    allSlots_string, hardwareComponents, PCIeSlotData = getSlotInfo(hardwareComponents, f)
+        
+    #tidy up the string that will be used to name the directory identifying the hardware used for a test 
+    hardwareInfo=mobo_string+cpu_string+allSlots_string+allRAM_string
+    hardwareInfo=hardwareInfo.replace(" ", "_")
+    hardwareInfo=hardwareInfo.replace("_In_Use_", "")
+    hardwareInfo=hardwareInfo.replace("PCI-E_3.0", "")
+    hardwareInfo=hardwareInfo.replace("CPU", "")
+    hardwareInfo=hardwareInfo.replace("", "")
+    hardwareInfo=hardwareInfo.replace("PCH", "")
+    hardwareInfo=hardwareInfo.replace("__", "_")
+    f.write(hardwareInfo)   
+    f.write("\n")
+    
+    # write the information that is in the hardwareInfo string, but on seperate lines, for later use
+    for component in hardwareComponents:
+        if component==PCIeSlotData:
+            for PCIeSlot in PCIeSlotData:
+                PCIeSlotKeys = PCIeSlot.keys()
+                if PCIeSlot["busAddress"] != None and PCIeSlot["slotUsage"] != None and PCIeSlot["slot"] != None and PCIeSlot["aliasStart"] != None and PCIeSlot["HBACard"] != None:
+                            f.write("HBA_Card_"+PCIeSlot["aliasStart"]+"\n")
+                            f.write("Bus Address"+PCIeSlot["aliasStart"]+"="+PCIeSlot["busAddress"]+"\n")
+                            f.write("slot"+PCIeSlot["aliasStart"]+"="+PCIeSlot["slot"]+"\n")
+                            f.write("Model"+PCIeSlot["aliasStart"]+"="+PCIeSlot["HBACard"]+"\n")                           
+        else:
+            if component == mobo_string:
+                f.write("Motherboard_Model="+component+"\n")
+            if component == cpu_string:
+                f.write("CPU_Type="+component+"\n")
+            if component == allRAM_string:
+                f.write(component+"\n")
+            if component == cpu_info:
+                f.write("CPU_Type="+cpu_info["model"]+"\n")
+                f.write("threads="+cpu_info["threads"]+"\n")
+                f.write("cores="+cpu_info["cores"]+"\n")             
+            if component == cpu_count:
+                f.write("CPU_qty="+str(cpu_count)+"\n")
+                             
+    f.close()
+    
+    testJS[directoryNames[directoryNameIndex]]["hardware"]=hardwareInfo
+    
+    f=open("/root/benchmarking/BenchMKresults/allResults.json", "w+")     
+    json.dump(testJS, f)
+    f.close()
+    
+if __name__ == "__main__":
+    main()
+

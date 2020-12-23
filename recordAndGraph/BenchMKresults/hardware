@@ -1,0 +1,15 @@
+X11SPL-F_Intel(R)_Xeon(R)_Silver_4110_17_SLOT4_X8(IN_X16)_9405W-16i_1_65_SLOT6_X8(IN_X16)_9405W-16i_2_RAM_(GB)=64
+Motherboard_Model=X11SPL-F_
+CPU_qty=1
+CPU_Type=Intel(R)_Xeon(R)_Silver_4110_CPU_
+threads=16
+cores=8
+RAM_(GB)=64
+HBA_Card_1
+Bus Address1=17
+slot1=CPU SLOT4 PCI-E 3.0 X8(IN X16)
+Model1=9405W-16i
+HBA_Card_2
+Bus Address2=65
+slot2=CPU SLOT6 PCI-E 3.0 X8(IN X16)
+Model2=9405W-16i
