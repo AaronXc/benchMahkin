@@ -1,0 +1,76 @@
+<mxfile host="app.diagrams.net" modified="2020-12-14T18:09:58.815Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36" etag="wvpEBpBtkkws-QoabR_j" version="13.11.0" type="github">
+  <diagram name="Page-1" id="2c0d36ab-eaac-3732-788b-9136903baeff">
+    <mxGraphModel dx="2031" dy="1089" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1.5" pageWidth="1169" pageHeight="827" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2dhVFBqvHw1l0eJDWAPI-65" value="the" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#647687;fontColor=#ffffff;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="498" y="348" width="730" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="DT0P4peGwYVnpcIGIM69-67" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;fontSize=15;fontColor=#000000;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="DT0P4peGwYVnpcIGIM69-63">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="655.2" y="706.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2" value="AutoSavedResults" style="rounded=1;fillColor=#23445D;gradientColor=none;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontFamily=Tahoma;fontSize=14" parent="1" vertex="1">
+          <mxGeometry x="560" y="600" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="61" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;strokeWidth=2;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cr9FANzja6UJMiHbJ5yW-189" target="2dhVFBqvHw1l0eJDWAPI-70" edge="1">
+          <mxGeometry x="-97" y="533.5" width="100" height="100" as="geometry">
+            <mxPoint x="-97" y="633.5" as="sourcePoint" />
+            <mxPoint x="598" y="778" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1076" y="670" />
+              <mxPoint x="778" y="718" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sJ-iOtZQnBbiaRmRqmVX-124" value="" style="edgeStyle=elbowEdgeStyle;elbow=vertical;strokeWidth=2;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" target="2" edge="1">
+          <mxGeometry x="623" y="263.5" width="100" height="100" as="geometry">
+            <mxPoint x="868" y="538" as="sourcePoint" />
+            <mxPoint x="768" y="583.5" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="718" y="558" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cr9FANzja6UJMiHbJ5yW-259" style="strokeWidth=2;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" target="cr9FANzja6UJMiHbJ5yW-189" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="868" y="558" />
+              <mxPoint x="1076" y="558" />
+            </Array>
+            <mxPoint x="868" y="538" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cr9FANzja6UJMiHbJ5yW-189" value="BenchMKresults_archive" style="rounded=1;fillColor=#23445D;gradientColor=none;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontFamily=Tahoma;fontSize=14" parent="1" vertex="1">
+          <mxGeometry x="956" y="600" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="2dhVFBqvHw1l0eJDWAPI-61" value="GraphPerformance.py" style="rounded=1;fillColor=#23445D;gradientColor=none;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontFamily=Tahoma;fontSize=14" parent="1" vertex="1">
+          <mxGeometry x="991" y="408" width="190" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="2dhVFBqvHw1l0eJDWAPI-62" value="benchMKscriptVars.py" style="rounded=1;fillColor=#23445D;gradientColor=none;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontFamily=Tahoma;fontSize=14" parent="1" vertex="1">
+          <mxGeometry x="548" y="408" width="190" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="2dhVFBqvHw1l0eJDWAPI-63" value="BenchMKresults" style="rounded=1;fillColor=#23445D;gradientColor=none;strokeColor=none;fontColor=#FFFFFF;fontStyle=1;fontFamily=Tahoma;fontSize=14" parent="1" vertex="1">
+          <mxGeometry x="766" y="408" width="190" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="2dhVFBqvHw1l0eJDWAPI-70" value="" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;rounded=1;strokeColor=none;" parent="1" vertex="1">
+          <mxGeometry x="981" y="726.5" width="190" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="2dhVFBqvHw1l0eJDWAPI-71" value="the contents of past BenchMKresults directories, named after the harware setup used for the test" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=15;" parent="1" vertex="1">
+          <mxGeometry x="1016" y="776.5" width="120" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="2dhVFBqvHw1l0eJDWAPI-72" value="these files need to be present at the outset to generate everything else in the directory" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=15;fontColor=#FFFFFF;" parent="1" vertex="1">
+          <mxGeometry x="638" y="338" width="460" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="DT0P4peGwYVnpcIGIM69-63" value="" style="whiteSpace=wrap;html=1;aspect=fixed;fillColor=#f8cecc;rounded=1;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="560" y="726.5" width="190" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="DT0P4peGwYVnpcIGIM69-64" value="directories named after the hardware setup for the test containing data on the test parameters, test results, and graphs" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=15;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="585" y="746.5" width="140" height="150" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
